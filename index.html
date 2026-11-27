@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>EEWmap - v1.1.1</title>
+<title>EEWmap - v1.1.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 * {
   box-sizing: border-box;
@@ -17,22 +20,31 @@ html, body {
   overscroll-behavior: none;
   touch-action: none;
   background: #00FF00;
-  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  font-family: "BIZ UDPGothic", sans-serif;
 }
 body {
   display: flex;
   align-items: center;
   justify-content: center;
 }
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 #screen {
   position: relative;
-  width: min(100vw, 177.7778vh);
+  width: min(100%, calc(100dvh * 16 / 9));
   aspect-ratio: 16 / 9;
-  max-height: 100vh;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   background: #172B43;
+  container-type: inline-size;
 }
 #header {
   flex: 0 0 12%;
@@ -42,9 +54,9 @@ body {
   padding: 0 2.2%;
   background: #E60026;
   color: #FFFFFF;
-  border-bottom: 3px solid #A5001B;
-  font-size: clamp(20px, 3.1vw, 42px);
-  font-weight: 900;
+  border-bottom: 0.22cqw solid #A5001B;
+  font-size: 2.9cqw;
+  font-weight: 700;
   letter-spacing: .025em;
 }
 #main {
@@ -52,6 +64,7 @@ body {
   min-height: 0;
   display: grid;
   grid-template-columns: 1fr 2fr;
+  overflow: hidden;
 }
 #information {
   position: relative;
@@ -60,11 +73,10 @@ body {
   display: flex;
   flex-direction: column;
   padding: 3.5% 4%;
-  padding-bottom: 65px;
   background: #263B52;
   color: #F2F4F7;
   overflow: hidden;
-  border-right: 2px solid #40566D;
+  border-right: 0.15cqw solid #40566D;
 }
 #alertText {
   flex: 0 0 auto;
@@ -72,21 +84,20 @@ body {
   background: transparent;
   border: none;
   padding: 0;
-  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1.48;
-  font-size: clamp(15px, 2vw, 27px);
+  font-size: 1.75cqw;
   overflow-wrap: anywhere;
 }
 #alertText .location {
   font-size: 1.12em;
   color: #FF737D;
-  font-weight: 900;
+  font-weight: 700;
 }
 #alertText .location-suffix {
   font-size: 0.8em;
   color: #F2F4F7;
-  font-weight: 900;
+  font-weight: 700;
 }
 #alertText .guidance {
   font-size: 0.85em;
@@ -106,9 +117,9 @@ body {
   min-height: 0;
   margin-top: 3%;
   color: #FFFFFF;
-  font-size: clamp(22px, 2.5vw, 32px);
+  font-size: 2.1cqw;
   line-height: 1.5;
-  font-weight: 900;
+  font-weight: 700;
   overflow: hidden;
   word-break: normal;
   overflow-wrap: normal;
@@ -119,21 +130,26 @@ body {
   margin-right: .45em;
 }
 #bottomActions {
-  position: absolute;
-  left: 12px;
-  bottom: 10px;
-  z-index: 5;
+  position: fixed;
+  left: max(10px, env(safe-area-inset-left));
+  bottom: max(10px, env(safe-area-inset-bottom));
+  width: auto;
+  max-width: calc(100vw - 20px);
+  min-height: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 9px;
   flex-wrap: wrap;
+  z-index: 100;
 }
 #bottomActions button {
-  height: 42px;
-  padding: 0 13px;
-  border-radius: 5px;
-  font-size: clamp(12px, 1.15vw, 16px);
-  font-weight: 900;
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: clamp(13px, 1.7vh, 18px);
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -145,19 +161,19 @@ body {
   box-shadow: 0 2px 5px rgba(0, 0, 0, .25);
 }
 #refreshButton {
-  min-width: 65px;
+  min-width: 72px;
   border: 2px solid #8297AC;
   background: #40566D;
   color: #FFFFFF;
 }
 #pollingButton {
-  min-width: 105px;
+  min-width: 120px;
   border: 2px solid #35B879;
   background: #167A50;
   color: #FFFFFF;
 }
 #testSoundButton {
-  min-width: 90px;
+  min-width: 100px;
   border: 2px solid #8297AC;
   background: #40566D;
   color: #FFFFFF;
@@ -199,31 +215,34 @@ body {
 }
 #mapStatus {
   position: absolute;
-  left: 3px;
+  left: 0.35cqw;
   top: 0;
   color: #F2F4F7;
-  font-size: clamp(10px, .9vw, 13px);
+  font-size: 0.85cqw;
   pointer-events: none;
   z-index: 2;
 }
 #controls {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 2%;
+  right: 2%;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 0.5cqw;
   z-index: 3;
 }
 #controls button {
-  width: clamp(28px, 3vw, 40px);
-  height: clamp(28px, 3vw, 40px);
+  width: 2.7cqw;
+  height: 2.7cqw;
+  min-width: 24px;
+  min-height: 24px;
   border: 1px solid #596675;
   border-radius: 4px;
   background: #AEB5BD;
   color: #172B43;
-  font-size: clamp(17px, 1.8vw, 24px);
-  font-weight: bold;
+  font-family: inherit;
+  font-size: 1.65cqw;
+  font-weight: 700;
   cursor: pointer;
 }
 #controls button:active {
@@ -234,11 +253,11 @@ body {
   right: 0;
   bottom: 0;
   max-width: 95%;
-  padding: 5px 9px;
+  padding: 0.35cqw 0.65cqw;
   background: transparent;
   color: #DCE2E8;
-  font-size: clamp(9px, .95vw, 14px);
-  font-weight: 600;
+  font-size: 0.85cqw;
+  font-weight: 500;
   line-height: 1.4;
   pointer-events: none;
 }
@@ -248,29 +267,30 @@ body {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: min(72%, 760px);
-  padding: clamp(18px, 3vw, 34px) clamp(22px, 4vw, 48px);
-  border: 2px solid #8297AC;
-  border-radius: 14px;
+  width: 72%;
+  max-width: 72%;
+  padding: 2.4cqw 3.2cqw;
+  border: 0.2cqw solid #8297AC;
+  border-radius: 1.1cqw;
   background: rgba(23, 43, 67, .97);
   color: #F2F4F7;
   text-align: center;
-  box-shadow: 0 5px 24px rgba(0, 0, 0, .35);
+  box-shadow: 0 0.5cqw 2.4cqw rgba(0, 0, 0, .35);
   pointer-events: none;
 }
 #centerMessage[hidden] {
   display: none;
 }
 #centerMessageTitle {
-  font-size: clamp(19px, 2.5vw, 32px);
+  font-size: 2.25cqw;
   line-height: 1.45;
-  font-weight: 900;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 #centerMessageDetail {
-  margin-top: 9px;
+  margin-top: 0.7cqw;
   color: #C8D3DE;
-  font-size: clamp(12px, 1.35vw, 18px);
+  font-size: 1.25cqw;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -280,58 +300,85 @@ body {
 #centerMessage.error #centerMessageTitle {
   color: #FF858C;
 }
-@media (max-aspect-ratio: 16/9) {
-  #screen {
-    width: 100vw;
-    height: 56.25vw;
-    max-height: 100vh;
-  }
+
+/* 試験・過去情報ラベル */
+#statusBadges {
+  position: absolute;
+  top: 1.5%;
+  right: 2%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.7cqw;
+  z-index: 30;
+  pointer-events: none;
+}
+.status-badge {
+  display: none;
+  padding: 0.35cqw 0.8cqw;
+  border: 0.25cqw solid #FFC400;
+  border-radius: 0.25cqw;
+  background: rgba(23, 43, 67, .96);
+  color: #FFC400;
+  font-size: 2.8cqw;
+  line-height: 1.2;
+  font-weight: 700;
+  white-space: nowrap;
+  text-align: center;
+}
+.status-badge.visible {
+  display: block;
 }
 </style>
 </head>
 <body>
-<div id="screen">
-  <header id="header">緊急地震速報（気象庁）</header>
-  <main id="main">
-    <section id="information">
-      <div id="alertText">
-        <div>緊急地震速報は発表されていません。</div>
-      </div>
-      <div id="areaDivider"></div>
-      <div id="areaList"></div>
-      <div id="bottomActions" data-html2canvas-ignore="true">
-        <button id="screenshotButton">画像コピー</button>
-        <button id="refreshButton">更新</button>
-        <button id="pollingButton">ポーリング開始</button>
-        <button id="testSoundButton">音声テスト</button>
-      </div>
-    </section>
-    <section id="mapArea">
-      <canvas id="canvas"></canvas>
-      <div id="mapStatus">待機中</div>
-      <div id="controls" data-html2canvas-ignore="true">
-        <button id="zoomIn" aria-label="拡大">＋</button>
-        <button id="zoomOut" aria-label="縮小">−</button>
-        <button id="reset" aria-label="初期表示">↺</button>
-      </div>
-      <div id="copyright">地図：「予報区等GISデータ」（気象庁）を加工して作成｜EEWmap v1.1.1 ©えこらー</div>
-    </section>
-  </main>
-
-  <div id="centerMessage">
-    <div id="centerMessageTitle">緊急地震速報は発表されていません。</div>
-    <div id="centerMessageDetail">待機中</div>
+<div id="app">
+  <div id="screen">
+    <header id="header">緊急地震速報（気象庁）</header>
+    <main id="main">
+      <section id="information">
+        <div id="alertText"></div>
+        <div id="areaDivider"></div>
+        <div id="areaList"></div>
+      </section>
+      <section id="mapArea">
+        <canvas id="canvas"></canvas>
+        <div id="mapStatus">待機中</div>
+        <div id="controls" data-html2canvas-ignore="true">
+          <button id="zoomIn" aria-label="拡大">＋</button>
+          <button id="zoomOut" aria-label="縮小">−</button>
+          <button id="reset" aria-label="初期表示">↺</button>
+        </div>
+        <div id="copyright">地図：「予報区等GISデータ」（気象庁）を加工して作成｜EEWmap v1.1.5 ©えこらー</div>
+      </section>
+    </main>
+    <div id="statusBadges">
+      <div id="testBadge" class="status-badge">試験</div>
+      <div id="pastBadge" class="status-badge">過去情報</div>
+    </div>
+    <div id="centerMessage" role="status" aria-live="polite">
+      <div id="centerMessageTitle">緊急地震速報は発表されていません。</div>
+      <div id="centerMessageDetail">待機中</div>
+    </div>
+    <div id="bottomActions" data-html2canvas-ignore="true">
+      <button id="screenshotButton">画像コピー</button>
+      <button id="refreshButton">更新</button>
+      <button id="pollingButton">ポーリング開始</button>
+      <button id="testSoundButton">音声テスト</button>
+    </div>
   </div>
 </div>
+
 <audio id="alertAudio" preload="auto">
   <source src="https://earthquake-info-bot.github.io/EEWmap/Warning-Siren03-01(High-Mid).mp3" type="audio/mpeg">
 </audio>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 "use strict";
 
 const GEOJSON_URL = "https://earthquake-info-bot.github.io/EEWmap/eew-fuken.json";
-const API_URL = "https://api.p2pquake.net/v2/history?codes=556&limit=1";
+const API_URL = "https://api-v2-sandbox.p2pquake.net/v2/history?codes=556&limit=1";
 const POLL_INTERVAL = 3000;
 const EXPIRATION_TIME = 15 * 60 * 1000;
 const alertAudio = document.getElementById("alertAudio");
@@ -363,6 +410,8 @@ const testSoundButton = document.getElementById("testSoundButton");
 const centerMessage = document.getElementById("centerMessage");
 const centerMessageTitle = document.getElementById("centerMessageTitle");
 const centerMessageDetail = document.getElementById("centerMessageDetail");
+const testBadge = document.getElementById("testBadge");
+const pastBadge = document.getElementById("pastBadge");
 
 let features = [];
 let mapPaths = [];
@@ -385,14 +434,15 @@ let initialViewSet = false;
 let latestData = null;
 let latestEventKey = null;
 let hasActiveAlert = false;
+let isPastInformation = false;
 
 let pollingEnabled = false;
 let pollingTimer = null;
 let pollingClockTimer = null;
 let lastPollAt = null;
 let isFetching = false;
+let activeFetchPromise = null;
 let lastObservedIssueTime = null;
-let audioContext = null;
 
 const prefMap = {
   "道央": ["石狩", "後志", "空知"], "道南": ["渡島", "檜山", "奥尻島", "胆振", "日高"],
@@ -598,7 +648,9 @@ function resizeCanvas() {
   const rect = mapArea.getBoundingClientRect();
   canvasWidth = rect.width;
   canvasHeight = rect.height;
-  dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  // 端末の画素密度に合わせてCanvasの内部解像度を確保
+  dpr = Math.min(window.devicePixelRatio || 1, 3);
 
   canvas.width = Math.round(canvasWidth * dpr);
   canvas.height = Math.round(canvasHeight * dpr);
@@ -621,8 +673,8 @@ function resizeCanvas() {
 function fitAreaList() {
   if (!areaList) return;
 
-  const maxSize = Math.min(34, Math.max(22, areaList.clientWidth * 0.085));
-  const minSize = 10;
+  const maxSize = Math.min(areaList.clientWidth * 0.085, areaList.clientHeight * 0.11);
+  const minSize = Math.max(8, areaList.clientWidth * 0.035);
   areaList.style.fontSize = maxSize + "px";
 
   let size = maxSize;
@@ -708,6 +760,11 @@ function setAlertText(data) {
   }
 }
 
+function updateStatusBadges(isTest = false, isPast = false) {
+  testBadge.classList.toggle("visible", isTest);
+  pastBadge.classList.toggle("visible", isPast);
+}
+
 function showCenterMessage(title, detail = "", type = "normal") {
   centerMessageTitle.textContent = title;
   centerMessageDetail.textContent = detail;
@@ -741,29 +798,33 @@ function drawEpicenter() {
   const scale = fitScale * camera.scale;
   const x = canvasWidth / 2 + (epicenterPoint.x - mapBounds.centerX) * scale + camera.x;
   const y = canvasHeight / 2 + (epicenterPoint.y - mapBounds.centerY) * scale + camera.y;
-  const size = 11;
+
+  // 地図描画領域の短辺に対する比率でマーカーサイズを決定
+  const size = Math.min(canvasWidth, canvasHeight) * 0.024;
 
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.save();
   ctx.translate(x, y);
+
+  // 震源マーカーの線端と接合部を丸くする
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
   if (assumedEpicenter) {
     ctx.strokeStyle = COLORS.epicenterOutline;
-    ctx.lineWidth = 10;
+    ctx.lineWidth = size * 0.91;
     ctx.beginPath();
     ctx.arc(0, 0, size, 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.strokeStyle = COLORS.epicenterBorder;
-    ctx.lineWidth = 7;
+    ctx.lineWidth = size * 0.64;
     ctx.beginPath();
     ctx.arc(0, 0, size, 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.strokeStyle = COLORS.epicenter;
-    ctx.lineWidth = 4;
+    ctx.lineWidth = size * 0.36;
     ctx.beginPath();
     ctx.arc(0, 0, size, 0, Math.PI * 2);
     ctx.stroke();
@@ -779,9 +840,9 @@ function drawEpicenter() {
       ctx.stroke();
     };
 
-    drawCross(COLORS.epicenterOutline, 10);
-    drawCross(COLORS.epicenterBorder, 7);
-    drawCross(COLORS.epicenter, 4);
+    drawCross(COLORS.epicenterOutline, size * 0.91);
+    drawCross(COLORS.epicenterBorder, size * 0.64);
+    drawCross(COLORS.epicenter, size * 0.36);
   }
 
   ctx.restore();
@@ -805,10 +866,13 @@ function draw() {
     ctx.fill(item.path, "evenodd");
   }
 
+  // 境界線は地物ごとに1回だけ描画
+  const boundaryWidth = Math.min(canvasWidth, canvasHeight) * 0.003;
+
   for (const item of mapPaths) {
     const isTarget = targetCodes.has(item.code);
     ctx.strokeStyle = isTarget ? COLORS.targetBorder : COLORS.normalBorder;
-    ctx.lineWidth = 1 / (fitScale * camera.scale);
+    ctx.lineWidth = boundaryWidth / (fitScale * camera.scale);
     ctx.stroke(item.path);
   }
 
@@ -983,15 +1047,15 @@ async function copyScreenshot() {
   screenshotButton.textContent = "作成中";
 
   try {
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
     const screenshot = await html2canvas(document.getElementById("screen"), {
       backgroundColor: null,
-      scale: 2,
+      scale: isMobile ? 3 : 2,
       useCORS: true,
       logging: false,
       ignoreElements: element =>
-        element.id === "controls" ||
-        element.id === "bottomActions" ||
-        element.id === "centerMessage"
+        element.id === "controls" || element.id === "bottomActions"
     });
 
     const blob = await new Promise(resolve => screenshot.toBlob(resolve, "image/png"));
@@ -1051,13 +1115,33 @@ function updatePollingButton() {
   }
 }
 
+function unlockAudio() {
+  alertAudio.muted = true;
+  const promise = alertAudio.play();
+
+  if (promise && typeof promise.then === "function") {
+    promise.then(() => {
+      alertAudio.pause();
+      alertAudio.currentTime = 0;
+      alertAudio.muted = false;
+    }).catch(error => {
+      alertAudio.muted = false;
+      console.warn("音声の初期化に失敗:", error);
+    });
+  } else {
+    alertAudio.pause();
+    alertAudio.currentTime = 0;
+    alertAudio.muted = false;
+  }
+}
+
 function startPolling() {
   if (pollingEnabled) return;
 
   pollingEnabled = true;
+  unlockAudio();
   updatePollingButton();
 
-  // 開始直後に1回取得し、その後3秒間隔で取得
   pollEarthquakeData();
   pollingTimer = setInterval(pollEarthquakeData, POLL_INTERVAL);
   pollingClockTimer = setInterval(updatePollingButton, 250);
@@ -1091,6 +1175,7 @@ async function playAlertSound() {
   try {
     alertAudio.pause();
     alertAudio.currentTime = 0;
+    alertAudio.muted = false;
     await alertAudio.play();
   } catch (error) {
     console.error("サイレン音の再生に失敗:", error);
@@ -1119,7 +1204,6 @@ function checkForNewIssue(data) {
   const currentIssueTime = parseIssueTime(data?.issue?.time);
   if (!Number.isFinite(currentIssueTime)) return;
 
-  // 初回は比較基準として保存するだけで、通知音は鳴らさない
   if (lastObservedIssueTime === null) {
     lastObservedIssueTime = currentIssueTime;
     return;
@@ -1135,9 +1219,8 @@ function checkForNewIssue(data) {
 }
 
 function showNoAlert() {
-  const wasActive = hasActiveAlert;
-
   hasActiveAlert = false;
+  isPastInformation = false;
   targetCodes.clear();
   epicenterPoint = null;
   assumedEpicenter = false;
@@ -1146,23 +1229,17 @@ function showNoAlert() {
   header.textContent = "緊急地震速報（気象庁）";
   alertText.replaceChildren();
 
-  const line = document.createElement("div");
-  line.textContent = "緊急地震速報は発表されていません。";
-  alertText.appendChild(line);
-
   areaDivider.style.display = "none";
   areaList.replaceChildren();
   mapStatus.textContent = "待機中";
 
-  showCenterMessage("緊急地震速報は発表されていません。");
+  updateStatusBadges(false, false);
+  showCenterMessage("緊急地震速報は発表されていません。", "待機中");
 
-  if (wasActive) {
-    initialViewSet = false;
-    resizeCanvas();
-  } else {
-    fitAreaList();
-    requestDraw();
-  }
+  // 表示状態を初期化し、地図も初期表示に戻す
+  initialViewSet = false;
+  camera = { scale: 1, x: 0, y: 0 };
+  resizeCanvas();
 }
 
 function applyEarthquakeData(data) {
@@ -1172,11 +1249,20 @@ function applyEarthquakeData(data) {
     return;
   }
 
-  /*if (!data || isExpired(data)) {
+  const expired = isExpired(data);
+
+  // ポーリング中は15分以上経過した情報を表示しない
+  if (expired && pollingEnabled) {
     latestEventKey = null;
     showNoAlert();
     return;
-  }*/
+  }
+
+  // ポーリング停止中も期限切れ情報は原則表示しない
+  // このreturnをコメントアウトすると、過去情報として表示できる  # testing
+  if (expired) return;
+
+  isPastInformation = expired;
 
   const issueSerial = data.cancelled === true
     ? "取消"
@@ -1201,6 +1287,8 @@ function applyEarthquakeData(data) {
   } else {
     header.textContent = "緊急地震速報（気象庁）";
   }
+
+  updateStatusBadges(data.test === true, isPastInformation);
 
   setAlertText(data);
   mapStatus.textContent = `${data.issue?.time ?? "不明"} #${issueSerial}`;
@@ -1231,8 +1319,10 @@ function applyEarthquakeData(data) {
     areaDivider.style.display = "block";
   }
 
+  // 新しい報を受信した場合は、対象地域に合わせて毎回自動ズーム
   if (isNewEvent) {
     initialViewSet = false;
+    camera = { scale: 1, x: 0, y: 0 };
     resizeCanvas();
   } else {
     requestDraw();
@@ -1241,6 +1331,12 @@ function applyEarthquakeData(data) {
 
 function showFetchError(error, code) {
   console.error("緊急地震速報の取得エラー:", error);
+
+  // エラー時は古い情報を残さず、表示状態を初期化
+  latestData = null;
+  latestEventKey = null;
+  lastObservedIssueTime = null;
+  showNoAlert();
 
   mapStatus.textContent = `エラーコード：${code}`;
 
@@ -1251,57 +1347,78 @@ function showFetchError(error, code) {
   );
 }
 
-async function refreshEarthquakeData() {
-  if (isFetching) return;
-  isFetching = true;
-  lastPollAt = Date.now();
-  updatePollingButton();
+async function refreshEarthquakeData(force = false) {
+  // 通常のポーリングは取得中なら重複実行しない
+  if (activeFetchPromise) {
+    if (!force) return activeFetchPromise;
 
-  try {
-    const response = await fetch(API_URL, {
-      cache: "no-store"
-    });
+    // 手動更新の場合は実行中の取得完了を待ってから再取得
+    await activeFetchPromise;
+    return refreshEarthquakeData(false);
+  }
 
-    if (!response.ok) {
-      const error = new Error(`P2P API取得失敗：HTTP ${response.status}`);
-      error.code = `HTTP_${response.status}`;
-      throw error;
-    }
-
-    let result;
+  const request = (async () => {
+    isFetching = true;
+    updatePollingButton();
 
     try {
-      result = await response.json();
+      const response = await fetch(API_URL, {
+        cache: "no-store"
+      });
+
+      if (!response.ok) {
+        const error = new Error(`P2P API取得失敗：HTTP ${response.status}`);
+        error.code = `HTTP_${response.status}`;
+        throw error;
+      }
+
+      let result;
+
+      try {
+        result = await response.json();
+      } catch (error) {
+        error.code = "INVALID_JSON";
+        throw error;
+      }
+
+      if (!Array.isArray(result)) {
+        const error = new Error("P2P APIの応答形式が正しくありません。");
+        error.code = "INVALID_RESPONSE";
+        throw error;
+      }
+
+      // 取得成功時点を記録
+      lastPollAt = Date.now();
+      latestData = result.length > 0 ? result[0] : null;
+
+      if (pollingEnabled && latestData) {
+        checkForNewIssue(latestData);
+      } else if (latestData && lastObservedIssueTime === null) {
+        // ポーリング開始前の初回取得を比較基準にする
+        lastObservedIssueTime = parseIssueTime(latestData.issue?.time);
+        if (!Number.isFinite(lastObservedIssueTime)) lastObservedIssueTime = null;
+      }
+
+      applyEarthquakeData(latestData);
     } catch (error) {
-      error.code = "INVALID_JSON";
-      throw error;
+      const code = error.code ||
+        (error instanceof TypeError ? "NETWORK_ERROR" : "FETCH_ERROR");
+
+      showFetchError(error, code);
+    } finally {
+      isFetching = false;
+      updatePollingButton();
     }
+  })();
 
-    if (!Array.isArray(result)) {
-      const error = new Error("P2P APIの応答形式が正しくありません。");
-      error.code = "INVALID_RESPONSE";
-      throw error;
-    }
+  activeFetchPromise = request;
 
-    latestData = result.length > 0 ? result[0] : null;
-
-    if (pollingEnabled && latestData) {
-      checkForNewIssue(latestData);
-    } else if (latestData && lastObservedIssueTime === null) {
-      // ポーリング開始前の初回取得を比較基準にする
-      lastObservedIssueTime = parseIssueTime(latestData.issue?.time);
-      if (!Number.isFinite(lastObservedIssueTime)) lastObservedIssueTime = null;
-    }
-
-    applyEarthquakeData(latestData);
-  } catch (error) {
-    const code = error.code ||
-      (error instanceof TypeError ? "NETWORK_ERROR" : "FETCH_ERROR");
-
-    showFetchError(error, code);
+  try {
+    await request;
   } finally {
-    isFetching = false;
-    updatePollingButton();
+    if (activeFetchPromise === request) {
+      activeFetchPromise = null;
+    }
   }
 }
 
@@ -1320,11 +1437,13 @@ async function manualRefresh() {
   latestEventKey = null;
   lastObservedIssueTime = null;
   showNoAlert();
+
   mapStatus.textContent = "情報を更新しています...";
   showCenterMessage("情報を更新しています...", "P2P APIからデータを取得しています。");
 
   try {
-    await refreshEarthquakeData();
+    // 取得中のポーリングがあれば完了を待ち、その後に手動取得
+    await refreshEarthquakeData(true);
   } finally {
     refreshButton.disabled = false;
     refreshButton.textContent = originalText;
@@ -1376,6 +1495,10 @@ async function initialize() {
     console.error("初期化エラー:", error);
 
     const code = error instanceof TypeError ? "GEOJSON_NETWORK_ERROR" : "GEOJSON_ERROR";
+
+    latestData = null;
+    latestEventKey = null;
+    showNoAlert();
 
     mapStatus.textContent = `エラーコード：${code}`;
     showCenterMessage(
