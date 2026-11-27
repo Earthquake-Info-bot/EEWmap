@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>EEWmap - v1.1.5</title>
+<title>EEWmap - v1.1.6</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;500;700&display=swap" rel="stylesheet">
@@ -349,7 +349,7 @@ body {
           <button id="zoomOut" aria-label="縮小">−</button>
           <button id="reset" aria-label="初期表示">↺</button>
         </div>
-        <div id="copyright">地図：「予報区等GISデータ」（気象庁）を加工して作成｜EEWmap v1.1.5 ©えこらー</div>
+        <div id="copyright">地図：「予報区等GISデータ」（気象庁）を加工して作成｜EEWmap v1.1.6 ©えこらー</div>
       </section>
     </main>
     <div id="statusBadges">
@@ -442,6 +442,8 @@ let pollingClockTimer = null;
 let lastPollAt = null;
 let isFetching = false;
 let activeFetchPromise = null;
+let fetchSequence = 0;
+let activeFetchController = null;
 let lastObservedIssueTime = null;
 
 const prefMap = {
@@ -1251,16 +1253,13 @@ function applyEarthquakeData(data) {
 
   const expired = isExpired(data);
 
-  // ポーリング中は15分以上経過した情報を表示しない
-  if (expired && pollingEnabled) {
+  // 15分以上経過した情報は待機画面に戻す
+  // このブロックをコメントアウトすると、過去情報として表示できる  # testing
+  if (expired) {
     latestEventKey = null;
     showNoAlert();
     return;
   }
-
-  // ポーリング停止中も期限切れ情報は原則表示しない
-  // このreturnをコメントアウトすると、過去情報として表示できる  # testing
-  if (expired) return;
 
   isPastInformation = expired;
 
@@ -1348,14 +1347,34 @@ function showFetchError(error, code) {
 }
 
 async function refreshEarthquakeData(force = false) {
-  // 通常のポーリングは取得中なら重複実行しない
+  // 取得中の場合
   if (activeFetchPromise) {
     if (!force) return activeFetchPromise;
 
-    // 手動更新の場合は実行中の取得完了を待ってから再取得
-    await activeFetchPromise;
+    // 手動更新なら、実行中の取得を中断して新しく取得する
+    const previousRequest = activeFetchPromise;
+    activeFetchController?.abort();
+
+    await previousRequest;
+
+    if (activeFetchPromise === previousRequest) {
+      activeFetchPromise = null;
+    }
+
     return refreshEarthquakeData(false);
   }
+
+  const controller = new AbortController();
+  activeFetchController = controller;
+
+  const requestId = ++fetchSequence;
+  let timedOut = false;
+
+  // 15秒でタイムアウト
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, 15000);
 
   const request = (async () => {
     isFetching = true;
@@ -1363,7 +1382,8 @@ async function refreshEarthquakeData(force = false) {
 
     try {
       const response = await fetch(API_URL, {
-        cache: "no-store"
+        cache: "no-store",
+        signal: controller.signal
       });
 
       if (!response.ok) {
@@ -1394,20 +1414,30 @@ async function refreshEarthquakeData(force = false) {
       if (pollingEnabled && latestData) {
         checkForNewIssue(latestData);
       } else if (latestData && lastObservedIssueTime === null) {
-        // ポーリング開始前の初回取得を比較基準にする
         lastObservedIssueTime = parseIssueTime(latestData.issue?.time);
-        if (!Number.isFinite(lastObservedIssueTime)) lastObservedIssueTime = null;
+        if (!Number.isFinite(lastObservedIssueTime)) {
+          lastObservedIssueTime = null;
+        }
       }
 
       applyEarthquakeData(latestData);
     } catch (error) {
-      const code = error.code ||
-        (error instanceof TypeError ? "NETWORK_ERROR" : "FETCH_ERROR");
+      // 手動更新による中断はエラーとして扱わない
+      if (error.name === "AbortError" && !timedOut) return;
+
+      const code = timedOut
+        ? "TIMEOUT"
+        : error.code || (error instanceof TypeError ? "NETWORK_ERROR" : "FETCH_ERROR");
 
       showFetchError(error, code);
     } finally {
-      isFetching = false;
-      updatePollingButton();
+      clearTimeout(timeoutId);
+
+      if (requestId === fetchSequence) {
+        isFetching = false;
+        activeFetchController = null;
+        updatePollingButton();
+      }
     }
   })();
 
