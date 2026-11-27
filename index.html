@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EEWmap - v1.1.1</title>
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  background: #00FF00;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+}
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#screen {
+  position: relative;
+  width: min(100vw, 177.7778vh);
+  aspect-ratio: 16 / 9;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #172B43;
+}
+#header {
+  flex: 0 0 12%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 2.2%;
+  background: #E60026;
+  color: #FFFFFF;
+  border-bottom: 3px solid #A5001B;
+  font-size: clamp(20px, 3.1vw, 42px);
+  font-weight: 900;
+  letter-spacing: .025em;
+}
+#main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+}
+#information {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 3.5% 4%;
+  padding-bottom: 65px;
+  background: #263B52;
+  color: #F2F4F7;
+  overflow: hidden;
+  border-right: 2px solid #40566D;
+}
+#alertText {
+  flex: 0 0 auto;
+  color: #F2F4F7;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  font-weight: 900;
+  line-height: 1.48;
+  font-size: clamp(15px, 2vw, 27px);
+  overflow-wrap: anywhere;
+}
+#alertText .location {
+  font-size: 1.12em;
+  color: #FF737D;
+  font-weight: 900;
+}
+#alertText .location-suffix {
+  font-size: 0.8em;
+  color: #F2F4F7;
+  font-weight: 900;
+}
+#alertText .guidance {
+  font-size: 0.85em;
+  font-weight: 400;
+  line-height: 1.55;
+}
+#areaDivider {
+  display: none;
+  flex: 0 0 1px;
+  width: 100%;
+  margin-top: 3%;
+  background: #8297AC;
+  opacity: .75;
+}
+#areaList {
+  flex: 1;
+  min-height: 0;
+  margin-top: 3%;
+  color: #FFFFFF;
+  font-size: clamp(22px, 2.5vw, 32px);
+  line-height: 1.5;
+  font-weight: 900;
+  overflow: hidden;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+.area-name {
+  display: inline-block;
+  white-space: nowrap;
+  margin-right: .45em;
+}
+#bottomActions {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+#bottomActions button {
+  height: 42px;
+  padding: 0 13px;
+  border-radius: 5px;
+  font-size: clamp(12px, 1.15vw, 16px);
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#screenshotButton {
+  min-width: 112px;
+  border: 2px solid #FFB52E;
+  background: #FFB52E;
+  color: #172B43;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .25);
+}
+#refreshButton {
+  min-width: 65px;
+  border: 2px solid #8297AC;
+  background: #40566D;
+  color: #FFFFFF;
+}
+#pollingButton {
+  min-width: 105px;
+  border: 2px solid #35B879;
+  background: #167A50;
+  color: #FFFFFF;
+}
+#testSoundButton {
+  min-width: 90px;
+  border: 2px solid #8297AC;
+  background: #40566D;
+  color: #FFFFFF;
+}
+#testSoundButton:active {
+  background: #536D87;
+}
+#screenshotButton:active {
+  background: #E99B18;
+}
+#refreshButton:active {
+  background: #536D87;
+}
+#pollingButton:active {
+  background: #11613F;
+}
+#bottomActions button:disabled {
+  opacity: .65;
+  cursor: default;
+}
+#bottomActions button:focus-visible,
+#controls button:focus-visible {
+  outline: 3px solid #FFFFFF;
+  outline-offset: 2px;
+}
+#mapArea {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #172B43;
+  touch-action: none;
+}
+#canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+#mapStatus {
+  position: absolute;
+  left: 3px;
+  top: 0;
+  color: #F2F4F7;
+  font-size: clamp(10px, .9vw, 13px);
+  pointer-events: none;
+  z-index: 2;
+}
+#controls {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 3;
+}
+#controls button {
+  width: clamp(28px, 3vw, 40px);
+  height: clamp(28px, 3vw, 40px);
+  border: 1px solid #596675;
+  border-radius: 4px;
+  background: #AEB5BD;
+  color: #172B43;
+  font-size: clamp(17px, 1.8vw, 24px);
+  font-weight: bold;
+  cursor: pointer;
+}
+#controls button:active {
+  background: #8795A3;
+}
+#copyright {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  max-width: 95%;
+  padding: 5px 9px;
+  background: transparent;
+  color: #DCE2E8;
+  font-size: clamp(9px, .95vw, 14px);
+  font-weight: 600;
+  line-height: 1.4;
+  pointer-events: none;
+}
+#centerMessage {
+  position: absolute;
+  z-index: 20;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(72%, 760px);
+  padding: clamp(18px, 3vw, 34px) clamp(22px, 4vw, 48px);
+  border: 2px solid #8297AC;
+  border-radius: 14px;
+  background: rgba(23, 43, 67, .97);
+  color: #F2F4F7;
+  text-align: center;
+  box-shadow: 0 5px 24px rgba(0, 0, 0, .35);
+  pointer-events: none;
+}
+#centerMessage[hidden] {
+  display: none;
+}
+#centerMessageTitle {
+  font-size: clamp(19px, 2.5vw, 32px);
+  line-height: 1.45;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+#centerMessageDetail {
+  margin-top: 9px;
+  color: #C8D3DE;
+  font-size: clamp(12px, 1.35vw, 18px);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+#centerMessage.error {
+  border-color: #E66B73;
+}
+#centerMessage.error #centerMessageTitle {
+  color: #FF858C;
+}
+@media (max-aspect-ratio: 16/9) {
+  #screen {
+    width: 100vw;
+    height: 56.25vw;
+    max-height: 100vh;
+  }
+}
+</style>
+</head>
+<body>
+<div id="screen">
+  <header id="header">緊急地震速報（気象庁）</header>
+  <main id="main">
+    <section id="information">
+      <div id="alertText">
+        <div>緊急地震速報は発表されていません。</div>
+      </div>
+      <div id="areaDivider"></div>
+      <div id="areaList"></div>
+      <div id="bottomActions" data-html2canvas-ignore="true">
+        <button id="screenshotButton">画像コピー</button>
+        <button id="refreshButton">更新</button>
+        <button id="pollingButton">ポーリング開始</button>
+        <button id="testSoundButton">音声テスト</button>
+      </div>
+    </section>
+    <section id="mapArea">
+      <canvas id="canvas"></canvas>
+      <div id="mapStatus">待機中</div>
+      <div id="controls" data-html2canvas-ignore="true">
+        <button id="zoomIn" aria-label="拡大">＋</button>
+        <button id="zoomOut" aria-label="縮小">−</button>
+        <button id="reset" aria-label="初期表示">↺</button>
+      </div>
+      <div id="copyright">地図：「予報区等GISデータ」（気象庁）を加工して作成｜EEWmap v1.1.1 ©えこらー</div>
+    </section>
+  </main>
+
+  <div id="centerMessage">
+    <div id="centerMessageTitle">緊急地震速報は発表されていません。</div>
+    <div id="centerMessageDetail">待機中</div>
+  </div>
+</div>
+<audio id="alertAudio" preload="auto">
+  <source src="https://earthquake-info-bot.github.io/EEWmap/Warning-Siren03-01(High-Mid).mp3" type="audio/mpeg">
+</audio>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+"use strict";
+
+const GEOJSON_URL = "https://earthquake-info-bot.github.io/EEWmap/eew-fuken.json";
+const API_URL = //"https://api.p2pquake.net/v2/history?codes=556&limit=1";
+  "https://api-v2-sandbox.p2pquake.net/v2/history?codes=556&limit=1";
+const POLL_INTERVAL = 3000;
+const EXPIRATION_TIME = 15 * 60 * 1000;
+const alertAudio = document.getElementById("alertAudio");
+
+const COLORS = {
+  background: "#172B43",
+  target: "#FFC400",
+  targetBorder: "#D99A00",
+  normal: "#AEB5BD",
+  normalBorder: "#596675",
+  epicenter: "#ED3838",
+  epicenterBorder: "#FFFFFF",
+  epicenterOutline: "#172B43"
+};
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const mapArea = document.getElementById("mapArea");
+const areaList = document.getElementById("areaList");
+const areaDivider = document.getElementById("areaDivider");
+const information = document.getElementById("information");
+const header = document.getElementById("header");
+const alertText = document.getElementById("alertText");
+const mapStatus = document.getElementById("mapStatus");
+const screenshotButton = document.getElementById("screenshotButton");
+const refreshButton = document.getElementById("refreshButton");
+const pollingButton = document.getElementById("pollingButton");
+const testSoundButton = document.getElementById("testSoundButton");
+const centerMessage = document.getElementById("centerMessage");
+const centerMessageTitle = document.getElementById("centerMessageTitle");
+const centerMessageDetail = document.getElementById("centerMessageDetail");
+
+let features = [];
+let mapPaths = [];
+let targetCodes = new Set();
+let epicenterPoint = null;
+let assumedEpicenter = false;
+let mapBounds = null;
+let targetBounds = null;
+let fitScale = 1;
+let camera = { scale: 1, x: 0, y: 0 };
+let canvasWidth = 0;
+let canvasHeight = 0;
+let dpr = 1;
+let pointers = new Map();
+let pinchStart = null;
+let isDragging = false;
+let dragStart = null;
+let animationRequested = false;
+let initialViewSet = false;
+let latestData = null;
+let latestEventKey = null;
+let hasActiveAlert = false;
+
+let pollingEnabled = false;
+let pollingTimer = null;
+let pollingClockTimer = null;
+let lastPollAt = null;
+let isFetching = false;
+let lastObservedIssueTime = null;
+let audioContext = null;
+
+const prefMap = {
+  "道央": ["石狩", "後志", "空知"], "道南": ["渡島", "檜山", "奥尻島", "胆振", "日高"],
+  "道北": ["上川", "留萌", "宗谷", "利尻礼文"], "道東": ["網走", "北見", "紋別", "十勝", "釧路", "根室"],
+  "青森": ["青森"], "岩手": ["岩手"], "宮城": ["宮城"],
+  "秋田": ["秋田"], "山形": ["山形"], "福島": ["福島"],
+  "茨城": ["茨城"], "栃木": ["栃木"], "群馬": ["群馬"],
+  "埼玉": ["埼玉"], "千葉": ["千葉"], "東京": ["東京"],
+  "伊豆諸島": ["伊豆大島", "新島", "神津島", "三宅島", "八丈島"], "小笠原": ["小笠原"], "神奈川": ["神奈川"],
+  "新潟": ["新潟", "佐渡"], "富山": ["富山"], "石川": ["石川"], "福井": ["福井"], "山梨": ["山梨"],
+  "長野": ["長野"], "岐阜": ["岐阜"],
+  "静岡": ["静岡"], "愛知": ["愛知"], "三重": ["三重"], "滋賀": ["滋賀"],
+  "京都": ["京都府"], "大阪": ["大阪"], "兵庫": ["兵庫", "淡路島"], "奈良": ["奈良"], "和歌山": ["和歌山"],
+  "鳥取": ["鳥取"], "島根": ["島根", "隠岐"], "岡山": ["岡山"], "広島": ["広島"], "山口": ["山口"],
+  "徳島": ["徳島"], "香川": ["香川"], "愛媛": ["愛媛"], "高知": ["高知"], "福岡": ["福岡"],
+  "佐賀": ["佐賀"], "長崎": ["長崎"], "熊本": ["熊本"], "大分": ["大分"], "宮崎": ["宮崎"],
+  "鹿児島": ["薩摩", "大隈", "十島村", "甑島", "種子島", "屋久島"], "奄美群島": ["奄美"],
+  "沖縄本島": ["沖縄本島", "久米島"], "大東島": ["大東島"], "宮古島": ["宮古島"],
+  "八重山": ["石垣島", "与那国島", "西表島"]
+};
+
+const regionMap1 = {
+  "北海道地方": ["道北","道央","道南","道東"], "東北地方": ["青森","岩手","宮城","秋田","山形","福島"],
+  "関東地方": ["茨城","栃木","群馬","埼玉","千葉","東京","神奈川"], "小笠原": ["小笠原"],
+  "伊豆諸島": ["伊豆諸島"],
+  "甲信地方": ["山梨","長野"], "北陸地方": ["富山","石川","福井"], "新潟": ["新潟"],
+  "東海地方": ["岐阜","静岡","愛知","三重"], "近畿地方": ["滋賀","京都","大阪","兵庫","奈良","和歌山"],
+  "中国地方": ["鳥取","島根","岡山","広島","山口"], "四国地方": ["徳島","香川","愛媛","高知"],
+  "九州地方": ["福岡","佐賀","長崎","熊本","大分","宮崎","鹿児島"], "奄美群島": ["奄美群島"],
+  "沖縄本島": ["沖縄本島"], "大東島": ["大東島"], "宮古島": ["宮古島"], "八重山": ["八重山"]
+};
+
+const regionOrder = [
+  "北海道地方","道北","道央","道南","道東","東北地方","青森","岩手","宮城","秋田","山形","福島",
+  "関東地方","茨城","栃木","群馬","埼玉","千葉","東京","神奈川","小笠原",
+  "伊豆諸島","伊豆大島","新島","神津島","三宅島","八丈島","甲信地方","山梨","長野", "新潟","佐渡",
+  "北陸地方","富山","石川","福井","東海地方","岐阜","静岡","愛知","三重",
+  "近畿地方","滋賀","京都","大阪","兵庫","奈良","和歌山","中国地方","鳥取","島根","岡山","広島","山口",
+  "四国地方","徳島","香川","愛媛","高知","九州地方","福岡","佐賀","長崎","熊本","大分","宮崎","鹿児島",
+  "沖縄","沖縄本島","奄美群島","大東島","宮古島","八重山"
+];
+
+function project(lon, lat) {
+  const clampedLat = Math.max(-85, Math.min(85, lat));
+  const x = lon * Math.PI / 180;
+  const rad = clampedLat * Math.PI / 180;
+  const y = Math.log(Math.tan(Math.PI / 4 + rad / 2));
+  return { x, y: -y };
+}
+
+function getGeometryCoordinates(geometry, callback) {
+  if (!geometry) return;
+
+  function walk(value) {
+    if (!Array.isArray(value)) return;
+
+    if (value.length >= 2 && typeof value[0] === "number" && typeof value[1] === "number") {
+      callback(value[0], value[1]);
+      return;
+    }
+
+    for (const child of value) walk(child);
+  }
+
+  walk(geometry.coordinates);
+}
+
+function createBounds() {
+  return {
+    minX: Infinity,
+    maxX: -Infinity,
+    minY: Infinity,
+    maxY: -Infinity
+  };
+}
+
+function addToBounds(bounds, point) {
+  bounds.minX = Math.min(bounds.minX, point.x);
+  bounds.maxX = Math.max(bounds.maxX, point.x);
+  bounds.minY = Math.min(bounds.minY, point.y);
+  bounds.maxY = Math.max(bounds.maxY, point.y);
+}
+
+function finishBounds(bounds) {
+  if (!Number.isFinite(bounds.minX)) {
+    throw new Error("有効な座標がありません。");
+  }
+
+  bounds.centerX = (bounds.minX + bounds.maxX) / 2;
+  bounds.centerY = (bounds.minY + bounds.maxY) / 2;
+  bounds.width = bounds.maxX - bounds.minX;
+  bounds.height = bounds.maxY - bounds.minY;
+  return bounds;
+}
+
+function calculateBounds(data) {
+  const bounds = createBounds();
+
+  for (const feature of data.features) {
+    getGeometryCoordinates(feature.geometry, (lon, lat) => {
+      addToBounds(bounds, project(lon, lat));
+    });
+  }
+
+  return finishBounds(bounds);
+}
+
+function getTargetCodes(data) {
+  const nameToCode = new Map();
+
+  for (const feature of features) {
+    const name = String(feature.properties?.name ?? "");
+    const code = String(feature.properties?.code ?? "");
+    if (name && code) nameToCode.set(name, code);
+  }
+
+  const codes = new Set();
+
+  for (const area of data.areas ?? []) {
+    const pref = String(area.pref ?? "");
+    const code = nameToCode.get(pref);
+    if (code) codes.add(code);
+  }
+
+  return codes;
+}
+
+function calculateTargetBounds() {
+  const bounds = createBounds();
+
+  for (const feature of features) {
+    const code = String(feature.properties?.code ?? "");
+    if (!targetCodes.has(code)) continue;
+
+    getGeometryCoordinates(feature.geometry, (lon, lat) => {
+      addToBounds(bounds, project(lon, lat));
+    });
+  }
+
+  if (epicenterPoint) addToBounds(bounds, epicenterPoint);
+  if (!Number.isFinite(bounds.minX)) return mapBounds;
+  return finishBounds(bounds);
+}
+
+function getRings(geometry) {
+  const result = [];
+
+  function addPolygon(polygon) {
+    for (const ring of polygon) result.push(ring);
+  }
+
+  if (geometry.type === "Polygon") {
+    addPolygon(geometry.coordinates);
+  } else if (geometry.type === "MultiPolygon") {
+    for (const polygon of geometry.coordinates) addPolygon(polygon);
+  }
+
+  return result;
+}
+
+function makePath(feature) {
+  const path = new Path2D();
+
+  for (const ring of getRings(feature.geometry)) {
+    if (!ring.length) continue;
+
+    const first = project(ring[0][0], ring[0][1]);
+    path.moveTo(first.x, first.y);
+
+    for (let i = 1; i < ring.length; i++) {
+      const point = project(ring[i][0], ring[i][1]);
+      path.lineTo(point.x, point.y);
+    }
+
+    path.closePath();
+  }
+
+  return path;
+}
+
+function setInitialView() {
+  if (!mapBounds || !canvasWidth || !canvasHeight) return;
+
+  const bounds = targetBounds || mapBounds;
+  const padding = Math.min(canvasWidth, canvasHeight) * 0.09;
+  const availableWidth = Math.max(1, canvasWidth - padding * 2);
+  const availableHeight = Math.max(1, canvasHeight - padding * 2);
+  const targetWidth = Math.max(bounds.width * fitScale, 1);
+  const targetHeight = Math.max(bounds.height * fitScale, 1);
+
+  const scaleX = availableWidth / targetWidth;
+  const scaleY = availableHeight / targetHeight;
+
+  camera.scale = Math.min(scaleX, scaleY, 30);
+  camera.x = -(bounds.centerX - mapBounds.centerX) * fitScale * camera.scale;
+  camera.y = -(bounds.centerY - mapBounds.centerY) * fitScale * camera.scale;
+
+  initialViewSet = true;
+  requestDraw();
+}
+
+function resizeCanvas() {
+  const rect = mapArea.getBoundingClientRect();
+  canvasWidth = rect.width;
+  canvasHeight = rect.height;
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  canvas.width = Math.round(canvasWidth * dpr);
+  canvas.height = Math.round(canvasHeight * dpr);
+
+  if (mapBounds) {
+    const padding = Math.min(canvasWidth, canvasHeight) * 0.07;
+
+    fitScale = Math.min(
+      (canvasWidth - padding * 2) / mapBounds.width,
+      (canvasHeight - padding * 2) / mapBounds.height
+    );
+
+    if (!initialViewSet) setInitialView();
+  }
+
+  fitAreaList();
+  requestDraw();
+}
+
+function fitAreaList() {
+  if (!areaList) return;
+
+  const maxSize = Math.min(34, Math.max(22, areaList.clientWidth * 0.085));
+  const minSize = 10;
+  areaList.style.fontSize = maxSize + "px";
+
+  let size = maxSize;
+
+  while (
+    size > minSize &&
+    (areaList.scrollHeight > areaList.clientHeight + 1 ||
+     areaList.scrollWidth > areaList.clientWidth + 1)
+  ) {
+    size -= 0.5;
+    areaList.style.fontSize = size + "px";
+  }
+}
+
+function updateAreaList(data) {
+  const areaSet = new Set();
+
+  for (const area of data.areas ?? []) {
+    let found = false;
+
+    for (const [pref, keywords] of Object.entries(prefMap)) {
+      if (keywords.some(keyword => String(area.name ?? "").includes(keyword))) {
+        areaSet.add(pref);
+        found = true;
+        break;
+      }
+    }
+
+    if (!found && area.name) areaSet.add(area.name);
+  }
+
+  for (const [region, prefs] of Object.entries(regionMap1)) {
+    if (prefs.every(pref => areaSet.has(pref))) {
+      prefs.forEach(pref => areaSet.delete(pref));
+      areaSet.add(region);
+    }
+  }
+
+  const areaSetFilter = regionOrder.filter(pref => areaSet.has(pref));
+  areaList.replaceChildren();
+
+  for (const name of areaSetFilter) {
+    const span = document.createElement("span");
+    span.className = "area-name";
+    span.textContent = name;
+    areaList.appendChild(span);
+  }
+
+  fitAreaList();
+}
+
+function setAlertText(data) {
+  alertText.replaceChildren();
+
+  if (data.cancelled === true) {
+    const line = document.createElement("div");
+    line.textContent = "先ほどの緊急地震速報はキャンセルされました。強い揺れの心配はありません。";
+    alertText.appendChild(line);
+    return;
+  }
+
+  const hypocenter = String(data.earthquake?.hypocenter?.reduceName ?? "震源地不明").trim();
+  const isAssumed = data.earthquake?.condition === "仮定震源要素";
+
+  const locationLine = document.createElement("div");
+  locationLine.className = "location";
+
+  const locationName = document.createElement("span");
+  locationName.textContent = hypocenter;
+
+  const locationSuffix = document.createElement("span");
+  locationSuffix.className = "location-suffix";
+  locationSuffix.textContent = `で${isAssumed ? "揺れ" : "地震"}`;
+
+  locationLine.append(locationName, locationSuffix);
+  alertText.appendChild(locationLine);
+
+  for (const text of ["強い揺れに警戒", "姿勢を低くして頭を守って"]) {
+    const line = document.createElement("div");
+    line.className = "guidance";
+    line.textContent = text;
+    alertText.appendChild(line);
+  }
+}
+
+function showCenterMessage(title, detail = "", type = "normal") {
+  centerMessageTitle.textContent = title;
+  centerMessageDetail.textContent = detail;
+  centerMessage.classList.toggle("error", type === "error");
+  centerMessage.hidden = false;
+}
+
+function hideCenterMessage() {
+  centerMessage.hidden = true;
+  centerMessage.classList.remove("error");
+}
+
+function setMapTransform() {
+  const scale = fitScale * camera.scale;
+  const offsetX = canvasWidth / 2 - mapBounds.centerX * scale + camera.x;
+  const offsetY = canvasHeight / 2 - mapBounds.centerY * scale + camera.y;
+
+  ctx.setTransform(
+    dpr * scale,
+    0,
+    0,
+    dpr * scale,
+    dpr * offsetX,
+    dpr * offsetY
+  );
+}
+
+function drawEpicenter() {
+  if (!epicenterPoint) return;
+
+  const scale = fitScale * camera.scale;
+  const x = canvasWidth / 2 + (epicenterPoint.x - mapBounds.centerX) * scale + camera.x;
+  const y = canvasHeight / 2 + (epicenterPoint.y - mapBounds.centerY) * scale + camera.y;
+  const size = 11;
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  if (assumedEpicenter) {
+    ctx.strokeStyle = COLORS.epicenterOutline;
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(0, 0, size, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = COLORS.epicenterBorder;
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.arc(0, 0, size, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = COLORS.epicenter;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, size, 0, Math.PI * 2);
+    ctx.stroke();
+  } else {
+    const drawCross = (color, width) => {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(-size, -size);
+      ctx.lineTo(size, size);
+      ctx.moveTo(size, -size);
+      ctx.lineTo(-size, size);
+      ctx.stroke();
+    };
+
+    drawCross(COLORS.epicenterOutline, 10);
+    drawCross(COLORS.epicenterBorder, 7);
+    drawCross(COLORS.epicenter, 4);
+  }
+
+  ctx.restore();
+}
+
+function draw() {
+  animationRequested = false;
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = COLORS.background;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (!mapPaths.length || !mapBounds) return;
+
+  setMapTransform();
+
+  for (const item of mapPaths) {
+    const isTarget = targetCodes.has(item.code);
+    ctx.fillStyle = isTarget ? COLORS.target : COLORS.normal;
+    ctx.fill(item.path, "evenodd");
+  }
+
+  for (const item of mapPaths) {
+    const isTarget = targetCodes.has(item.code);
+    ctx.strokeStyle = isTarget ? COLORS.targetBorder : COLORS.normalBorder;
+    ctx.lineWidth = 1 / (fitScale * camera.scale);
+    ctx.stroke(item.path);
+  }
+
+  drawEpicenter();
+}
+
+function requestDraw() {
+  if (animationRequested) return;
+  animationRequested = true;
+  requestAnimationFrame(draw);
+}
+
+function zoomAt(nextScale, x, y) {
+  const newScale = Math.max(0.7, Math.min(30, nextScale));
+  const ratio = newScale / camera.scale;
+
+  camera.x = x - canvasWidth / 2 -
+    (x - canvasWidth / 2 - camera.x) * ratio;
+
+  camera.y = y - canvasHeight / 2 -
+    (y - canvasHeight / 2 - camera.y) * ratio;
+
+  camera.scale = newScale;
+  requestDraw();
+}
+
+function resetView() {
+  setInitialView();
+}
+
+function getPointerDistance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function getPointerCenter(a, b) {
+  return {
+    x: (a.x + b.x) / 2,
+    y: (a.y + b.y) / 2
+  };
+}
+
+canvas.addEventListener("wheel", event => {
+  event.preventDefault();
+
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12;
+
+  zoomAt(camera.scale * factor, x, y);
+}, { passive: false });
+
+canvas.addEventListener("pointerdown", event => {
+  event.preventDefault();
+  canvas.setPointerCapture(event.pointerId);
+
+  const rect = canvas.getBoundingClientRect();
+  const point = {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top
+  };
+
+  pointers.set(event.pointerId, point);
+
+  if (pointers.size === 1) {
+    isDragging = true;
+    dragStart = {
+      pointer: point,
+      cameraX: camera.x,
+      cameraY: camera.y
+    };
+  } else if (pointers.size === 2) {
+    const values = [...pointers.values()];
+    const center = getPointerCenter(values[0], values[1]);
+
+    pinchStart = {
+      distance: getPointerDistance(values[0], values[1]),
+      scale: camera.scale,
+      anchorX: (center.x - canvasWidth / 2 - camera.x) / (fitScale * camera.scale),
+      anchorY: (center.y - canvasHeight / 2 - camera.y) / (fitScale * camera.scale)
+    };
+
+    isDragging = false;
+    dragStart = null;
+  }
+});
+
+canvas.addEventListener("pointermove", event => {
+  if (!pointers.has(event.pointerId)) return;
+  event.preventDefault();
+
+  const rect = canvas.getBoundingClientRect();
+  const point = {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top
+  };
+
+  pointers.set(event.pointerId, point);
+
+  if (pointers.size === 1 && isDragging && dragStart) {
+    camera.x = dragStart.cameraX + point.x - dragStart.pointer.x;
+    camera.y = dragStart.cameraY + point.y - dragStart.pointer.y;
+    requestDraw();
+  } else if (pointers.size === 2 && pinchStart) {
+    const values = [...pointers.values()];
+    const distance = getPointerDistance(values[0], values[1]);
+    const center = getPointerCenter(values[0], values[1]);
+    const ratio = distance / Math.max(1, pinchStart.distance);
+    const newScale = Math.max(0.7, Math.min(30, pinchStart.scale * ratio));
+
+    camera.scale = newScale;
+    camera.x = center.x - canvasWidth / 2 - pinchStart.anchorX * fitScale * newScale;
+    camera.y = center.y - canvasHeight / 2 - pinchStart.anchorY * fitScale * newScale;
+    requestDraw();
+  }
+});
+
+function endPointer(event) {
+  pointers.delete(event.pointerId);
+
+  if (pointers.size < 2) pinchStart = null;
+
+  if (pointers.size === 1) {
+    const remaining = [...pointers.values()][0];
+    isDragging = true;
+    dragStart = {
+      pointer: remaining,
+      cameraX: camera.x,
+      cameraY: camera.y
+    };
+  } else {
+    isDragging = false;
+    dragStart = null;
+  }
+}
+
+canvas.addEventListener("pointerup", endPointer);
+canvas.addEventListener("pointercancel", endPointer);
+canvas.addEventListener("lostpointercapture", endPointer);
+
+document.getElementById("zoomIn").addEventListener("click", () => {
+  zoomAt(camera.scale * 1.25, canvasWidth / 2, canvasHeight / 2);
+});
+
+document.getElementById("zoomOut").addEventListener("click", () => {
+  zoomAt(camera.scale / 1.25, canvasWidth / 2, canvasHeight / 2);
+});
+
+document.getElementById("reset").addEventListener("click", resetView);
+
+mapArea.addEventListener("touchmove", event => {
+  event.preventDefault();
+}, { passive: false });
+
+document.addEventListener("touchmove", event => {
+  if (event.target.closest("#mapArea")) event.preventDefault();
+}, { passive: false });
+
+async function copyScreenshot() {
+  if (!window.html2canvas) {
+    alert("スクリーンショット機能を読み込めませんでした。");
+    return;
+  }
+
+  if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") {
+    alert("このブラウザでは画像のコピーに対応していません。");
+    return;
+  }
+
+  screenshotButton.disabled = true;
+  const originalText = screenshotButton.textContent;
+  screenshotButton.textContent = "作成中";
+
+  try {
+    const screenshot = await html2canvas(document.getElementById("screen"), {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      ignoreElements: element =>
+        element.id === "controls" ||
+        element.id === "bottomActions" ||
+        element.id === "centerMessage"
+    });
+
+    const blob = await new Promise(resolve => screenshot.toBlob(resolve, "image/png"));
+
+    if (!blob) throw new Error("画像を生成できませんでした。");
+
+    await navigator.clipboard.write([
+      new ClipboardItem({ "image/png": blob })
+    ]);
+
+    screenshotButton.textContent = "コピー完了";
+  } catch (error) {
+    console.error("スクリーンショットのコピーに失敗:", error);
+    alert("スクリーンショットをコピーできませんでした。\n" + error.message);
+    screenshotButton.textContent = originalText;
+  } finally {
+    screenshotButton.disabled = false;
+
+    if (screenshotButton.textContent === "コピー完了") {
+      setTimeout(() => {
+        screenshotButton.textContent = originalText;
+      }, 1500);
+    }
+  }
+}
+
+screenshotButton.addEventListener("click", copyScreenshot);
+
+function parseIssueTime(value) {
+  if (typeof value !== "string") return NaN;
+
+  const normalized = value.trim().replace(/\//g, "-").replace(" ", "T");
+  const withTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(normalized)
+    ? normalized
+    : normalized + "+09:00";
+
+  return Date.parse(withTimezone);
+}
+
+function isExpired(data) {
+  const issueTime = parseIssueTime(data.issue?.time);
+  if (!Number.isFinite(issueTime)) return true;
+  return Date.now() - issueTime >= EXPIRATION_TIME;
+}
+
+function formatElapsedTime() {
+  if (!lastPollAt) return "未取得";
+  const seconds = Math.max(0, Math.floor((Date.now() - lastPollAt) / 1000));
+  return `${seconds}秒前に取得`;
+}
+
+function updatePollingButton() {
+  if (pollingEnabled) {
+    pollingButton.textContent = `ポーリング中 ${formatElapsedTime()}`;
+  } else {
+    pollingButton.textContent = "ポーリング開始";
+  }
+}
+
+function startPolling() {
+  if (pollingEnabled) return;
+
+  pollingEnabled = true;
+  updatePollingButton();
+
+  // 開始直後に1回取得し、その後3秒間隔で取得
+  pollEarthquakeData();
+  pollingTimer = setInterval(pollEarthquakeData, POLL_INTERVAL);
+  pollingClockTimer = setInterval(updatePollingButton, 250);
+}
+
+function stopPolling() {
+  pollingEnabled = false;
+
+  if (pollingTimer) {
+    clearInterval(pollingTimer);
+    pollingTimer = null;
+  }
+
+  if (pollingClockTimer) {
+    clearInterval(pollingClockTimer);
+    pollingClockTimer = null;
+  }
+
+  updatePollingButton();
+}
+
+pollingButton.addEventListener("click", () => {
+  if (pollingEnabled) {
+    stopPolling();
+  } else {
+    startPolling();
+  }
+});
+
+async function playAlertSound() {
+  try {
+    alertAudio.pause();
+    alertAudio.currentTime = 0;
+    await alertAudio.play();
+  } catch (error) {
+    console.error("サイレン音の再生に失敗:", error);
+  }
+}
+
+async function testAlertSound() {
+  if (testSoundButton.disabled) return;
+
+  testSoundButton.disabled = true;
+  testSoundButton.textContent = "再生中";
+
+  try {
+    await playAlertSound();
+  } finally {
+    setTimeout(() => {
+      testSoundButton.disabled = false;
+      testSoundButton.textContent = "音声テスト";
+    }, 600);
+  }
+}
+
+testSoundButton.addEventListener("click", testAlertSound);
+
+function checkForNewIssue(data) {
+  const currentIssueTime = parseIssueTime(data?.issue?.time);
+  if (!Number.isFinite(currentIssueTime)) return;
+
+  // 初回は比較基準として保存するだけで、通知音は鳴らさない
+  if (lastObservedIssueTime === null) {
+    lastObservedIssueTime = currentIssueTime;
+    return;
+  }
+
+  if (currentIssueTime > lastObservedIssueTime && data.cancelled !== true) {
+    playAlertSound();
+  }
+
+  if (currentIssueTime > lastObservedIssueTime) {
+    lastObservedIssueTime = currentIssueTime;
+  }
+}
+
+function showNoAlert() {
+  const wasActive = hasActiveAlert;
+
+  hasActiveAlert = false;
+  targetCodes.clear();
+  epicenterPoint = null;
+  assumedEpicenter = false;
+  targetBounds = null;
+
+  header.textContent = "緊急地震速報（気象庁）";
+  alertText.replaceChildren();
+
+  const line = document.createElement("div");
+  line.textContent = "緊急地震速報は発表されていません。";
+  alertText.appendChild(line);
+
+  areaDivider.style.display = "none";
+  areaList.replaceChildren();
+  mapStatus.textContent = "待機中";
+
+  showCenterMessage("緊急地震速報は発表されていません。");
+
+  if (wasActive) {
+    initialViewSet = false;
+    resizeCanvas();
+  } else {
+    fitAreaList();
+    requestDraw();
+  }
+}
+
+function applyEarthquakeData(data) {
+  if (!data) {
+    latestEventKey = null;
+    showNoAlert();
+    return;
+  }
+
+  /*if (!data || isExpired(data)) {
+    latestEventKey = null;
+    showNoAlert();
+    return;
+  }*/
+
+  const issueSerial = data.cancelled === true
+    ? "取消"
+    : String(data.issue?.serial ?? "報数不明");
+
+  const eventKey = [
+    data.id ?? data.issue?.eventId ?? "",
+    data.issue?.time ?? "",
+    issueSerial
+  ].join("_");
+
+  const isNewEvent = eventKey !== latestEventKey;
+  latestEventKey = eventKey;
+  hasActiveAlert = true;
+
+  hideCenterMessage();
+
+  if (data.cancelled === true) {
+    header.textContent = "緊急地震速報（取消）";
+  } else if (data.test === true) {
+    header.textContent = "緊急地震速報（試験配信）";
+  } else {
+    header.textContent = "緊急地震速報（気象庁）";
+  }
+
+  setAlertText(data);
+  mapStatus.textContent = `${data.issue?.time ?? "不明"} #${issueSerial}`;
+
+  if (data.cancelled === true) {
+    targetCodes.clear();
+    epicenterPoint = null;
+    assumedEpicenter = false;
+    targetBounds = null;
+    areaDivider.style.display = "none";
+    areaList.replaceChildren();
+  } else {
+    updateAreaList(data);
+    targetCodes = getTargetCodes(data);
+
+    const hypocenter = data.earthquake?.hypocenter;
+    const latitude = Number(hypocenter?.latitude);
+    const longitude = Number(hypocenter?.longitude);
+
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      epicenterPoint = project(longitude, latitude);
+    } else {
+      epicenterPoint = null;
+    }
+
+    assumedEpicenter = data.earthquake?.condition === "仮定震源要素";
+    targetBounds = calculateTargetBounds();
+    areaDivider.style.display = "block";
+  }
+
+  if (isNewEvent) {
+    initialViewSet = false;
+    resizeCanvas();
+  } else {
+    requestDraw();
+  }
+}
+
+function showFetchError(error, code) {
+  console.error("緊急地震速報の取得エラー:", error);
+
+  mapStatus.textContent = `エラーコード：${code}`;
+
+  showCenterMessage(
+    "緊急地震速報の情報を取得できません。",
+    `エラーコード：${code}`,
+    "error"
+  );
+}
+
+async function refreshEarthquakeData() {
+  if (isFetching) return;
+  isFetching = true;
+  lastPollAt = Date.now();
+  updatePollingButton();
+
+  try {
+    const response = await fetch(API_URL, {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      const error = new Error(`P2P API取得失敗：HTTP ${response.status}`);
+      error.code = `HTTP_${response.status}`;
+      throw error;
+    }
+
+    let result;
+
+    try {
+      result = await response.json();
+    } catch (error) {
+      error.code = "INVALID_JSON";
+      throw error;
+    }
+
+    if (!Array.isArray(result)) {
+      const error = new Error("P2P APIの応答形式が正しくありません。");
+      error.code = "INVALID_RESPONSE";
+      throw error;
+    }
+
+    latestData = result.length > 0 ? result[0] : null;
+
+    if (pollingEnabled && latestData) {
+      checkForNewIssue(latestData);
+    } else if (latestData && lastObservedIssueTime === null) {
+      // ポーリング開始前の初回取得を比較基準にする
+      lastObservedIssueTime = parseIssueTime(latestData.issue?.time);
+      if (!Number.isFinite(lastObservedIssueTime)) lastObservedIssueTime = null;
+    }
+
+    applyEarthquakeData(latestData);
+  } catch (error) {
+    const code = error.code ||
+      (error instanceof TypeError ? "NETWORK_ERROR" : "FETCH_ERROR");
+
+    showFetchError(error, code);
+  } finally {
+    isFetching = false;
+    updatePollingButton();
+  }
+}
+
+function pollEarthquakeData() {
+  refreshEarthquakeData();
+}
+
+async function manualRefresh() {
+  if (refreshButton.disabled) return;
+
+  refreshButton.disabled = true;
+  const originalText = refreshButton.textContent;
+  refreshButton.textContent = "更新中";
+
+  latestData = null;
+  latestEventKey = null;
+  lastObservedIssueTime = null;
+  showNoAlert();
+  mapStatus.textContent = "情報を更新しています...";
+  showCenterMessage("情報を更新しています...", "P2P APIからデータを取得しています。");
+
+  try {
+    await refreshEarthquakeData();
+  } finally {
+    refreshButton.disabled = false;
+    refreshButton.textContent = originalText;
+  }
+}
+
+refreshButton.addEventListener("click", manualRefresh);
+
+async function initialize() {
+  try {
+    const response = await fetch(GEOJSON_URL, {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error(`GeoJSON取得失敗：HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.type !== "FeatureCollection" || !Array.isArray(data.features)) {
+      throw new Error("GeoJSONの形式が正しくありません。");
+    }
+
+    features = data.features.filter(feature =>
+      feature.geometry &&
+      ["Polygon", "MultiPolygon"].includes(feature.geometry.type)
+    );
+
+    if (!features.length) {
+      throw new Error("描画可能な地物がありません。");
+    }
+
+    mapBounds = calculateBounds({ features });
+
+    mapPaths = features.map(feature => ({
+      path: makePath(feature),
+      code: String(feature.properties?.code ?? "")
+    }));
+
+    resizeCanvas();
+
+    if (!mapPaths.length) {
+      throw new Error("地図の描画データを作成できませんでした。");
+    }
+
+    await refreshEarthquakeData();
+  } catch (error) {
+    console.error("初期化エラー:", error);
+
+    const code = error instanceof TypeError ? "GEOJSON_NETWORK_ERROR" : "GEOJSON_ERROR";
+
+    mapStatus.textContent = `エラーコード：${code}`;
+    showCenterMessage(
+      "地図データを取得できませんでした。",
+      `エラーコード：${code} / ${error.message}`,
+      "error"
+    );
+  }
+}
+
+const resizeObserver = new ResizeObserver(() => {
+  resizeCanvas();
+});
+
+resizeObserver.observe(mapArea);
+resizeObserver.observe(information);
+
+updatePollingButton();
+initialize();
+</script>
+</body>
+</html>
